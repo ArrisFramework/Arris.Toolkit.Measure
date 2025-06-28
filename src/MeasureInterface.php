@@ -4,6 +4,8 @@ namespace Arris\Toolkit;
 
 interface MeasureInterface
 {
+    public static function setLanguage(string $lang): void;
+
     public static function cleanMemory(): void;
     public static function getMemoryUsage(): int;
 

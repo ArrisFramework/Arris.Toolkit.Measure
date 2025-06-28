@@ -4,15 +4,17 @@ namespace Arris\Toolkit;
 
 final class Measure implements MeasureInterface
 {
+    use MeasureLocaleTrait;
+
     const SIZE_KB = 1024;
     const SIZE_MB = self::SIZE_KB * 1024;
     const SIZE_GB = self::SIZE_MB * 1024;
     const SIZE_TB = self::SIZE_GB * 1024;
 
+    const TIME_NS_TO_MS = 1e+6;
+
     public static int $PRECISION_MEMORY = 2;
     public static int $PRECISION_TIME = 3;
-
-    const TIME_NS_TO_MS = 1e+6;
 
     /**
      * Clean memory before measurement
@@ -41,6 +43,7 @@ final class Measure implements MeasureInterface
         }
         return memory_get_usage(true);
     }
+
 
     /**
      * Measure function execution
@@ -86,16 +89,16 @@ final class Measure implements MeasureInterface
 
         $output = [];
         if (!empty($measurement['name'])) {
-            $output[] = "Test: {$measurement['name']}";
+            $output[] = self::_t('test') . ": {$measurement['name']}";
         }
 
         if ($show_results) {
-            $output[] = " - Result: " . (is_scalar($measurement['result']) ? $measurement['result'] : gettype($measurement['result']));
+            $output[] = " - " . self::_t('result') . ": " . (is_scalar($measurement['result']) ? $measurement['result'] : gettype($measurement['result']));
         }
 
-        $output[] = " - Time: "        . self::formatTime($timeNs / self::TIME_NS_TO_MS);
-        $output[] = " - Memory used: " . self::formatMemory($measurement['memory_bytes']);
-        $output[] = " - Peak memory: " . self::formatMemory($measurement['peak_memory_bytes']);
+        $output[] = " - ". self::_t('time') . ": " . self::formatTime($timeNs / self::TIME_NS_TO_MS);
+        $output[] = " - ". self::_t('memory_used') . ": " . self::formatMemory($measurement['memory_bytes']);
+        $output[] = " - ". self::_t('peak_memory') . ": " . self::formatMemory($measurement['peak_memory_bytes']);
         $output[] = str_repeat("-", 50) . "\n";
 
         return implode("\n", $output);
@@ -110,9 +113,9 @@ final class Measure implements MeasureInterface
     public static function formatTime($time_ms):string
     {
         return match(true) {
-            $time_ms < 1 => round($time_ms * 1000, self::$PRECISION_TIME) . " μs",
-            $time_ms < 1000 => round($time_ms, self::$PRECISION_TIME) . " ms",
-            default => round($time_ms / 1000, self::$PRECISION_TIME) . " sec"
+            $time_ms < 1 => round($time_ms * 1000, self::$PRECISION_TIME) . ' ' . self::_u('μs'),
+            $time_ms < 1000 => round($time_ms, self::$PRECISION_TIME) . ' ' . self::_u('ms'),
+            default => round($time_ms / 1000, self::$PRECISION_TIME) . ' ' . self::_u('sec')
         };
     }
 
@@ -125,12 +128,12 @@ final class Measure implements MeasureInterface
      */
     public static function formatMemory(int $bytes, ?int $precision = null): string
     {
-        $precision = $precision ?: self::$PRECISION_TIME;
+        $precision = $precision ?: self::$PRECISION_MEMORY;
         return match (true) {
-            $bytes >= self::SIZE_GB     => round($bytes / self::SIZE_GB, $precision) . ' Gb',
-            $bytes >= self::SIZE_MB     => round($bytes / self::SIZE_MB, $precision) . ' Mb',
-            $bytes >= self::SIZE_KB     => round($bytes / self::SIZE_KB, $precision) . ' Kb',
-            default                     =>                                                  $bytes . ' bytes'
+            $bytes >= self::SIZE_GB     => round($bytes / self::SIZE_GB, $precision) . ' ' . self::_u('gb'),
+            $bytes >= self::SIZE_MB     => round($bytes / self::SIZE_MB, $precision) . ' ' . self::_u('mb'),
+            $bytes >= self::SIZE_KB     => round($bytes / self::SIZE_KB, $precision) . ' ' . self::_u('kb'),
+            default                     =>                                                  $bytes . ' ' . self::_u('bytes')
         };
     }
 
@@ -196,14 +199,14 @@ final class Measure implements MeasureInterface
     public static function showTimeline(array $measurements): string
     {
         if (empty($measurements)) {
-            return "No measurements to display";
+            return self::_t('no_measurements');
         }
 
         // Находим максимальное время для масштабирования
         $maxTime = max(array_column($measurements, 'time_ns'));
         $maxLength = 50; // Ширина timeline в символах
 
-        $output = "Execution Timeline:\n";
+        $output = self::_t('timeline') . "\n";
         $output .= str_repeat("-", $maxLength + 20) . "\n";
 
         foreach ($measurements as $name => $measurement) {

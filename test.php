@@ -135,6 +135,7 @@ function array_depth_recursion(array $array): int {
     return $max_depth;
 }
 
+Measure::setLanguage('ru');
 // Запуск тестов
 $result = Measure::measure("generateTestArray", [ 100000, 50000 ], "Генерация массива");
 $array = $result['result'];
